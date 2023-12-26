@@ -1,0 +1,106 @@
+
+//+------------------------------------------------------------------+
+//|                                              Stabyl.mq5          |
+//|                        Copyright 2022, forexroboteasy.com        |
+//|                                 Developed by Forex Robot Easy Team|
+//|                                                                  |
+//|                   Terms of Reference for Writing Code for         |
+//|                   Stabyl Forex Software                           |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                              Global Variables                      |
+//+------------------------------------------------------------------+
+int zoneSELL;  // Overbought level
+int zoneBUY;   // Oversold level
+
+//+------------------------------------------------------------------+
+//|                        Stochastic Indicator                        |
+//+------------------------------------------------------------------+
+double StochasticIndicator(string symbol, ENUM_TIMEFRAMES timeframe)
+{
+    double mainStochasticLine = iStochastic(symbol, timeframe, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0);
+    double signalLine = iStochastic(symbol, timeframe, 5, 3, 3, MODE_SMA, 0, MODE_SIGNAL, 0);
+    
+    return mainStochasticLine - signalLine;
+}
+
+//+------------------------------------------------------------------+
+//|                           Generate Signals                        |
+//+------------------------------------------------------------------+
+bool GenerateSignals(string symbol, ENUM_TIMEFRAMES timeframe)
+{
+    double stochasticValue = StochasticIndicator(symbol, timeframe);
+    
+    if (stochasticValue > zoneSELL)
+    {
+        if (stochasticValue > iStochastic(symbol, timeframe, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 1))
+        {
+            return true; // Generate sell signal
+        }
+    }
+    else if (stochasticValue < zoneBUY)
+    {
+        if (stochasticValue < iStochastic(symbol, timeframe, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 1))
+        {
+            return true; // Generate buy signal
+        }
+    }
+    
+    return false;
+}
+
+//+------------------------------------------------------------------+
+//|                      Double Stochastic Strategy                   |
+//+------------------------------------------------------------------+
+bool DoubleStochasticStrategy(string symbol, ENUM_TIMEFRAMES timeframe)
+{
+    double mainStochasticLine1 = iStochastic(symbol, timeframe, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0);
+    double mainStochasticLine2 = iStochastic(symbol, timeframe, 15, 5, 5, MODE_SMA, 0, MODE_MAIN, 0);
+    
+    double signalLine1 = iStochastic(symbol, timeframe, 5, 3, 3, MODE_SMA, 0, MODE_SIGNAL, 0);
+    double signalLine2 = iStochastic(symbol, timeframe, 15, 5, 5, MODE_SMA, 0, MODE_SIGNAL, 0);
+    
+    if (mainStochasticLine1 > mainStochasticLine2 && signalLine1 > signalLine2)
+    {
+        return true; // Generate buy signal
+    }
+    else if (mainStochasticLine1 < mainStochasticLine2 && signalLine1 < signalLine2)
+    {
+        return true; // Generate sell signal
+    }
+    
+    return false;
+}
+
+//+------------------------------------------------------------------+
+//|                     Risk Management Functions                     |
+//+------------------------------------------------------------------+
+void ManageRisk()
+{
+    // Implement risk management functions here
+}
+
+//+------------------------------------------------------------------+
+//|                             Stabyl EA                            |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    string symbol = Symbol();
+    
+    // Calculate stochastic indicator for each currency pair
+    double stochasticValue = StochasticIndicator(symbol, PERIOD_CURRENT);
+    
+    // Generate sell or buy signals
+    bool generateSignal = GenerateSignals(symbol, PERIOD_CURRENT);
+    
+    if (generateSignal)
+    {
+        // Execute trading algorithm
+        if (DoubleStochasticStrategy(symbol, PERIOD_CURRENT))
+        {
+            // Execute trade
+            ManageRisk();
+        }
+    }
+}
